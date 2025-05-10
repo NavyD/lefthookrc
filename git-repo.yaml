@@ -13,7 +13,7 @@ pre-commit:
 
           - name: gitleaks
             # https://github.com/gitleaks/gitleaks#commands
-            run: gitleaks dir '{staged_files}'
+            run: gitleaks git --staged -v
             file_types:
               - text
 
