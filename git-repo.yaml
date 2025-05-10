@@ -30,12 +30,16 @@ pre-commit:
             # https://github.com/pre-commit/pre-commit-hooks/blob/31903eabdb97f5a3375fb1ea419ff782de64d7e7/.pre-commit-hooks.yaml#L49
             run: |
               python - '{staged_files}' <<'EOF'
+              import os
               import re
               import sys
               name_pat = re.compile(r'(?i)((^|/)(CON|PRN|AUX|NUL|COM[\d¹²³]|LPT[\d¹²³])(\.|/|$)|[<>:\"\\|?*\x00-\x1F]|/[^/]*[\.\s]/|[^/]*[\.\s]$)')
               for arg in sys.argv[1:]:
-                  if m := name_pat.search(arg):
-                      msg = f'Found invalid chars `{m.group()}` in `{arg}`'
+                  # NOTE: 移除 windows 绝对路径包含的盘符 `C:` 避免 `:` 匹配
+                  # 在非 windows 平台上不会移除盘符
+                  _drive, path = os.path.splitdrive(arg)
+                  if m := name_pat.search(path):
+                      msg = f'Found invalid chars `{m.group()}` in `{path}`'
                       raise ValueError(msg)
               EOF
             # editorconfig-checker-enable
