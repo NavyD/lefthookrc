@@ -1,12 +1,11 @@
 [tools]
 actionlint = "latest"
 gitleaks = "latest"
-lefthook = "1.11"
 python = "3.11"
-"pipx:pre-commit-hooks" = "5"
+"pipx:pre-commit-hooks" = "6"
 "pipx:commitizen" = "4"
-"ubi:huacnlee/autocorrect" = "2.13"
-typos = "1.31"
+"ubi:huacnlee/autocorrect" = "2"
+typos = "1"
 # editorconfig-checker-disable-next-line
 # NOTE: [Confusion on official cli binary name #232](https://github.com/editorconfig-checker/editorconfig-checker/issues/232)
 # 使用 editorconfig-checker 匹配 github release asset ，避免匹配了 ec 使用
@@ -14,3 +13,9 @@ typos = "1.31"
 [tools."ubi:editorconfig-checker/editorconfig-checker"]
 version = "3"
 matching = "editorconfig-checker"
+[tools.'ubi:evilmartians/lefthook']
+version = '1.13'
+rename_exe = 'lefthook{% if os_family() == "windows" %}.exe{% endif %}'
+
+[settings.pipx]
+uvx = false
