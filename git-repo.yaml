@@ -1,7 +1,10 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/evilmartians/lefthook/refs/heads/master/schema.json
-min_version: "1.11.5"
+min_version: "1.13.1"
 
 pre-commit:
+  fail_on_changes: "always"
+  parallel: false
+  piped: true
   jobs:
     - name: lint
       group:
@@ -33,7 +36,6 @@ pre-commit:
 
           # https://github.com/pre-commit/pre-commit-hooks
           - name: check-illegal-windows-names
-            # editorconfig-checker-disable
             # https://github.com/pre-commit/pre-commit-hooks/blob/31903eabdb97f5a3375fb1ea419ff782de64d7e7/.pre-commit-hooks.yaml#L49
             only:
               - run: python --version
@@ -51,7 +53,6 @@ pre-commit:
                       msg = f'Found invalid chars `{m.group()}` in `{path}`'
                       raise ValueError(msg)
               EOF
-            # editorconfig-checker-enable
           - name: check-case-conflict
             only:
               - run: check-case-conflict -h
@@ -70,7 +71,73 @@ pre-commit:
             only:
               - run: destroyed-symlinks -h
             run: destroyed-symlinks '{staged_files}'
-
+          # python checkers
+          - name: uv-lock
+            run: uv lock --check
+            glob:
+              - uv.lock
+              - uv.toml
+              - pyproject.toml
+            only:
+              - run: uv --version
+              - run: python --version
+          - name: ruff-check
+            run: ruff check --force-exclude '{staged_files}'
+            glob:
+              - "*.py"
+              - "*.pyi"
+              # 检查是否存在 pyproject.toml 是为了确保仅配置了 ruff 时生效
+              # NOTE: 这是由于 `only` 在 win 上使用 `powershell` 而在其它平台使用 `sh` 导致的差异
+              - pyproject.toml
+            only:
+              - run: ruff --version
+          - name: mypy
+            # NOTE: mypy 需要整个项目的上下文，单独检查 py 文件可能会导致误报
+            run: mypy
+            glob:
+              - "*.py"
+              - pyproject.toml
+              - mypy.ini
+              - .mypy.ini
+            only:
+              - run: python --version
+              - run: mypy --version
+            # shell checkers
+          - name: shellcheck
+            run: shellcheck '{staged_files}'
+            glob:
+              - "*.sh*"
+            only:
+              - run: shellcheck --version
+    - name: format
+      group:
+        parallel: true
+        jobs:
+          - name: prettier
+            # [Prettier is an opinionated code formatter.](https://github.com/prettier/prettier)
+            run: prettier --ignore-unknown --write '{staged_files}'
+            glob: "*.{json,md,markdown,yml,yaml,css,scss,less,html,htm,js,jsx,ts,tsx,vue,graphql,gql}{,.*}"
+            stage_fixed: false
+            only:
+              - run: prettier --version
+          - name: shfmt
+            # [A shell parser, formatter, and interpreter with bash support; includes shfmt](https://github.com/mvdan/sh)
+            # 支持 editorconfig
+            run: shfmt -l -w '{staged_files}'
+            glob: "*.sh*"
+            stage_fixed: false
+            only:
+              - run: shfmt --version
+          - name: toml
+            run: tombi format '{staged_files}'
+            glob: "*.toml*"
+            only:
+              - run: tombi --version
+          - name: lua
+            run: stylua '{staged_files}'
+            glob: "*.{lua,luau}"
+            only:
+              - run: stylua --version
 commit-msg:
   piped: true
   jobs:
