@@ -124,13 +124,8 @@ pre-commit:
               - run: ruff --version
           # [pre-commit/mirrors-mypy/.pre-commit-config.yaml](https://github.com/pre-commit/mirrors-mypy/blob/main/.pre-commit-hooks.yaml)
           - name: mypy
-            # NOTE: mypy 需要整个项目的上下文，单独检查 py 文件可能会导致误报
-            run: mypy
-            glob:
-              - "*.py"
-              - pyproject.toml
-              - mypy.ini
-              - .mypy.ini
+            run: mypy '{staged_files}'
+            glob: "*.py"
             only:
               - run: python --version
               - run: mypy --version
