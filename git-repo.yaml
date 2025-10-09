@@ -6,8 +6,56 @@ pre-commit:
   parallel: false
   piped: true
   jobs:
-    # 优先执行 format 后再 lint
+    - name: fix
+      stage_fixed: true
+      group:
+        parallel: true
+        jobs:
+          - name: markdown
+            file_types:
+              - text
+            glob: "*.{md,markdown}"
+            group:
+              piped: true
+              jobs:
+                - name: autocorrect-CJK
+                  # https://github.com/huacnlee/autocorrect#use-in-cli
+                  run: autocorrect --fix '{staged_files}'
+                  only:
+                    - run: autocorrect --version
+                - name: markdownlint
+                  # https://github.com/DavidAnson/markdownlint-cli2#command-line
+                  run: markdownlint-cli2 --fix '{staged_files}'
+                  only:
+                    - run: markdownlint-cli2 --version
+                - name: typos
+                  # [Source code spell checker](https://github.com/crate-ci/typos)
+                  run: typos --force-exclude --write-changes '{staged_files}'
+                  only:
+                    - run: typos --version
+          - name: python
+            file_types:
+              - text
+            group:
+              piped: true
+              jobs:
+                - name: uv-lock
+                  run: uv lock
+                  glob: &uv_files
+                    - uv.lock
+                    - uv.toml
+                    - pyproject.toml
+                  only: &uv_only_run
+                    - run: python --version
+                    - run: uv --version
+                - name: ruff-check-fix
+                  run: ruff check --force-exclude --fix '{staged_files}'
+                  glob: &ruff_files "*.{py,pyi}"
+                  only: &ruff_only_run
+                    - run: python --version
+                    - run: ruff --version
     - name: format
+      stage_fixed: true
       group:
         parallel: true
         jobs:
@@ -15,28 +63,44 @@ pre-commit:
             # [Prettier is an opinionated code formatter.](https://github.com/prettier/prettier)
             run: prettier --ignore-unknown --write '{staged_files}'
             glob: "*.{json,md,markdown,yml,yaml,css,scss,less,html,htm,js,jsx,ts,tsx,vue,graphql,gql}{,.*}"
-            stage_fixed: false
             only:
               - run: prettier --version
-          - name: shfmt
-            # [A shell parser, formatter, and interpreter with bash support; includes shfmt](https://github.com/mvdan/sh)
-            # 支持 editorconfig
-            run: shfmt -l -w '{staged_files}'
-            glob: "*.sh*"
-            stage_fixed: false
-            only:
-              - run: shfmt --version
-          - name: toml
-            run: tombi format '{staged_files}'
-            glob: "*.toml*"
-            only:
-              - run: tombi --version
+
+          ## lua
           - name: lua
+            # [A Lua code formatter](https://github.com/JohnnyMorganz/StyLua)
             run: stylua '{staged_files}'
             glob: "*.{lua,luau}"
             only:
               - run: stylua --version
-    - name: lint
+
+          ## python
+          - name: python
+            file_types:
+              - text
+            group:
+              piped: true
+              jobs:
+                - name: ruff-format
+                  run: ruff format --force-exclude '{staged_files}'
+                  glob: *ruff_files
+                  only: *ruff_only_run
+
+          ## shell
+          - name: shell
+            file_types:
+              - text
+            group:
+              piped: true
+              jobs:
+                - name: shfmt
+                  # [A shell parser, formatter, and interpreter with bash support; includes shfmt](https://github.com/mvdan/sh)
+                  # 支持 editorconfig
+                  run: shfmt -l -w '{staged_files}'
+                  glob: &sh_files "*.{sh,bash}{,.*}"
+                  only:
+                    - run: shfmt --version
+    - name: check
       group:
         parallel: true
         jobs:
@@ -61,6 +125,7 @@ pre-commit:
               - text
             only:
               - run: editorconfig-checker --version
+
           # https://github.com/pre-commit/pre-commit-hooks
           - name: check-illegal-windows-names
             # https://github.com/pre-commit/pre-commit-hooks/blob/31903eabdb97f5a3375fb1ea419ff782de64d7e7/.pre-commit-hooks.yaml#L49
@@ -98,45 +163,76 @@ pre-commit:
             only:
               - run: destroyed-symlinks -h
             run: destroyed-symlinks '{staged_files}'
-          # python checkers
-          # [Using uv in pre-commit](https://docs.astral.sh/uv/guides/integration/pre-commit/#using-uv-in-pre-commit)
-          - name: uv-lock
-            # 仅检查 lock 文件是否应该更新
-            run: uv lock --check
-            glob:
-              - uv.lock
-              - uv.toml
-              - pyproject.toml
+
+          ## docker
+          - name: hadolint
+            # [Dockerfile linter, validate inline bash, written in Haskell](https://github.com/hadolint/hadolint)
+            run: hadolint '{staged_files}'
+            glob: "{,*.}{Dockerfile,dockerfile}"
             only:
-              - run: uv --version
-              - run: python --version
-          # [ruff-pre-commit/.pre-commit-hooks.yaml](https://github.com/astral-sh/ruff-pre-commit/blob/main/.pre-commit-hooks.yaml)
-          # [ruff/integrations/pre-commit](https://docs.astral.sh/ruff/integrations/#pre-commit)
-          - name: ruff-check
-            run: ruff check --force-exclude '{staged_files}'
-            glob:
-              - "*.py"
-              - "*.pyi"
-              # 检查是否存在 pyproject.toml 是为了确保仅配置了 ruff 时生效
-              # NOTE: 这是由于 `only` 在 win 上使用 `powershell` 而在其它平台使用 `sh` 导致的差异
-              - pyproject.toml
-            only:
-              - run: ruff --version
-          # [pre-commit/mirrors-mypy/.pre-commit-config.yaml](https://github.com/pre-commit/mirrors-mypy/blob/main/.pre-commit-hooks.yaml)
-          - name: mypy
-            run: mypy '{staged_files}'
-            glob: "*.py"
-            only:
-              - run: python --version
-              - run: mypy --version
-            # shell checkers
-            # [koalaman/shellcheck-precommit](https://github.com/koalaman/shellcheck-precommit)
-          - name: shellcheck
-            run: shellcheck '{staged_files}'
-            glob:
-              - "*.sh*"
-            only:
-              - run: shellcheck --version
+              - run: hadolint --version
+
+          ## markdown
+          - name: markdown
+            file_types:
+              - text
+            glob: "*.{md,markdown}"
+            group:
+              piped: true
+              jobs:
+                - name: markdownlint
+                  # https://github.com/DavidAnson/markdownlint-cli2#command-line
+                  run: markdownlint-cli2 '{staged_files}'
+                  only:
+                    - run: markdownlint-cli2 --version
+                - name: typos
+                  run: typos --force-exclude '{staged_files}'
+                  only:
+                    - run: typos --version
+
+          ## python
+          - name: python
+            file_types:
+              - text
+            group:
+              parallel: true
+              piped: false
+              jobs:
+                # [Using uv in pre-commit](https://docs.astral.sh/uv/guides/integration/pre-commit/#using-uv-in-pre-commit)
+                - name: uv-lock-check
+                  # 仅检查 lock 文件是否应该更新
+                  run: uv lock --check
+                  glob: *uv_files
+                  only: *uv_only_run
+                # [ruff-pre-commit/.pre-commit-hooks.yaml](https://github.com/astral-sh/ruff-pre-commit/blob/main/.pre-commit-hooks.yaml)
+                # [ruff/integrations/pre-commit](https://docs.astral.sh/ruff/integrations/#pre-commit)
+                - name: ruff-check
+                  run: ruff check --force-exclude '{staged_files}'
+                  glob: *ruff_files
+                  only: *ruff_only_run
+                # [pre-commit/mirrors-mypy/.pre-commit-config.yaml](https://github.com/pre-commit/mirrors-mypy/blob/main/.pre-commit-hooks.yaml)
+                - name: mypy
+                  run: mypy '{staged_files}'
+                  glob: "*.py"
+                  only:
+                    - run: python --version
+                    - run: mypy --version
+
+          ## shell
+          - name: shell
+            file_types:
+              - text
+            group:
+              parallel: true
+              piped: false
+              jobs:
+                - name: shellcheck
+                  # [ShellCheck, a static analysis tool for shell scripts](https://github.com/koalaman/shellcheck)
+                  run: shellcheck --external-sources '{staged_files}'
+                  glob: *sh_files
+                  only:
+                    - run: shellcheck --version
+
 commit-msg:
   piped: true
   jobs:
@@ -157,3 +253,20 @@ commit-msg:
     - name: commitizen
       # https://github.com/commitizen-tools/commitizen/blob/master/.pre-commit-hooks.yaml
       run: cz check --allow-abort --commit-msg-file '{1}'
+
+post-checkout:
+  jobs:
+    - name: python
+      group:
+        jobs:
+          - &uv_sync
+            name: uv-sync
+            run: uv sync --locked
+            only: *uv_only_run
+            glob: *uv_files
+post-merge:
+  jobs:
+    - name: python
+      group:
+        jobs:
+          - *uv_sync

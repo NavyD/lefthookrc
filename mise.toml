@@ -1,18 +1,14 @@
 [tools]
-actionlint = "latest"
-gitleaks = "latest"
+actionlint = "1"
+gitleaks = "8"
 python = "3.11"
 "pipx:pre-commit-hooks" = "6"
 "pipx:commitizen" = "4"
 "ubi:huacnlee/autocorrect" = "2"
 typos = "1"
-prettier = "latest"
-tombi = "latest"
+prettier = "3.6"
+tombi = "0.6"
 
-# editorconfig-checker-disable-next-line
-# NOTE: [Confusion on official cli binary name #232](https://github.com/editorconfig-checker/editorconfig-checker/issues/232)
-# 使用 editorconfig-checker 匹配 github release asset ，避免匹配了 ec 使用
-# editorconfig-checker 作为 binname 找不到的问题
 [tools."ubi:editorconfig-checker/editorconfig-checker"]
 version = "3"
 matching = "editorconfig-checker"
@@ -24,6 +20,10 @@ rename_exe = 'lefthook{% if os_family() == "windows" %}.exe{% endif %}'
 [tools."ubi:mvdan/sh"]
 version = "3"
 rename_exe = 'shfmt{% if os_family() == "windows" %}.exe{% endif %}'
+
+[tools."github:koalaman/shellcheck"]
+version = "0.11"
+platforms.windows-x64 = { asset_pattern = "shellcheck-v*.zip" }
 
 [settings.pipx]
 uvx = false
