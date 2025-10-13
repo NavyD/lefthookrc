@@ -254,19 +254,26 @@ commit-msg:
       # https://github.com/commitizen-tools/commitizen/blob/master/.pre-commit-hooks.yaml
       run: cz check --allow-abort --commit-msg-file '{1}'
 
-post-checkout:
+post-checkout: &out_hook
+  parallel: true
+  fail_on_changes: always
   jobs:
     - name: python
       group:
         jobs:
-          - &uv_sync
-            name: uv-sync
+          - name: uv-sync
             run: uv sync --locked
             only: *uv_only_run
             glob: *uv_files
-post-merge:
-  jobs:
-    - name: python
+    - name: nodejs
       group:
         jobs:
-          - *uv_sync
+          - name: npm-install
+            run: npm install
+            glob:
+              - package.json
+            only:
+              - run: node --version
+              - run: npm --version
+post-merge: *out_hook
+post-rewrite: *out_hook
