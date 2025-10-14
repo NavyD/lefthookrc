@@ -8,6 +8,7 @@ python = "3.11"
 typos = "1"
 prettier = "3.6"
 tombi = "0.6"
+yamllint = "1.37"
 
 [tools."ubi:editorconfig-checker/editorconfig-checker"]
 version = "3"
