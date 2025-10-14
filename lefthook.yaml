@@ -3,6 +3,6 @@ extends:
   - lefthook-markdown.yaml
   - lefthook-nodejs.yaml
   - lefthook-common.yaml
-
+colors: false
 pre-commit:
   fail_on_changes: ci
