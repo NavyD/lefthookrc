@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/evilmartians/lefthook/refs/heads/master/schema.json
+pre-commit:
+  piped: true
+  jobs:
+    - name: format
+      stage_fixed: true
+      group:
+        jobs:
+          - name: stylua
+            # [A Lua code formatter](https://github.com/JohnnyMorganz/StyLua)
+            run: stylua '{staged_files}'
+            glob: "*.lua{,u}"
+            only:
+              - run: stylua --version
