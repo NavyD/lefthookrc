@@ -9,6 +9,7 @@ typos = "1"
 prettier = "3.6"
 tombi = "0.6"
 yamllint = "1.37"
+markdownlint-cli2 = "0.18"
 
 [tools."ubi:editorconfig-checker/editorconfig-checker"]
 version = "3"
