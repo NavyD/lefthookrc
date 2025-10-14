@@ -40,7 +40,10 @@ pre-commit:
               - run: editorconfig-checker --version
           - name: yamllint
             # https://github.com/adrienverge/yamllint/blob/master/.pre-commit-hooks.yaml
-            run: yamllint '{staged_files}'
+            run: |
+              # [Custom configuration without a config file](https://yamllint.readthedocs.io/en/stable/configuration.html#custom-configuration-without-a-config-file)
+              # NOTE: 使用 editorconfig-checker 检查 line-length 即可
+              yamllint -d '{extends: relaxed, rules: {line-length: disable}}' '{staged_files}'
             glob: "*.y{,a}ml"
             only:
               - run: yamllint --version
