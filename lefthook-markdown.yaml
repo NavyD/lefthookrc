@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/evilmartians/lefthook/refs/heads/master/schema.json
+pre-commit:
+  jobs:
+    - name: fix
+      group:
+        jobs:
+          - name: markdown
+            file_types:
+              - text
+            glob: "*.{md,markdown}"
+            group:
+              piped: true
+              jobs:
+                - name: autocorrect-CJK
+                  # https://github.com/huacnlee/autocorrect#use-in-cli
+                  run: autocorrect --fix '{staged_files}'
+                  only:
+                    - run: autocorrect --version
+                - name: markdownlint
+                  # https://github.com/DavidAnson/markdownlint-cli2#command-line
+                  run: markdownlint-cli2 --fix '{staged_files}'
+                  only:
+                    - run: markdownlint-cli2 --version
+                - name: typos
+                  # [Source code spell checker](https://github.com/crate-ci/typos)
+                  run: typos --force-exclude --write-changes '{staged_files}'
+                  only:
+                    - run: typos --version

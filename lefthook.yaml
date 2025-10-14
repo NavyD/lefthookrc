@@ -1,2 +1,8 @@
 extends:
-  - git-repo.yaml
+  - lefthook-mise.yaml
+  - lefthook-markdown.yaml
+  - lefthook-nodejs.yaml
+  - lefthook-common.yaml
+
+pre-commit:
+  fail_on_changes: ci

@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/evilmartians/lefthook/refs/heads/master/schema.json
+pre-commit:
+  jobs:
+    - name: format
+      group:
+        jobs:
+          - name: python
+            stage_fixed: true
+            group:
+              jobs:
+                - name: ruff-format
+                  run: ruff format --force-exclude '{staged_files}'
+                  glob: &ruff_files "*.py{,i}"
+                  only: &ruff_only_run
+                    - run: python --version
+                    - run: ruff --version
+    - name: fix
+      group:
+        jobs:
+          - name: python
+            stage_fixed: true
+            group:
+              piped: true
+              jobs:
+                - name: uv-lock
+                  run: uv lock
+                  glob: &uv_files
+                    - uv.lock
+                    - uv.toml
+                    - pyproject.toml
+                  only: &uv_only_run
+                    - run: python --version
+                    - run: uv --version
+                - name: ruff-check-fix
+                  run: ruff check --force-exclude --fix '{staged_files}'
+                  glob: *ruff_files
+                  only: *ruff_only_run
+    - name: check
+      group:
+        jobs:
+          - name: python
+            stage_fixed: false
+            group:
+              parallel: true
+              piped: false
+              jobs:
+                # [Using uv in pre-commit](https://docs.astral.sh/uv/guides/integration/pre-commit/#using-uv-in-pre-commit)
+                - name: uv-lock-check
+                  # 仅检查 lock 文件是否应该更新
+                  run: uv lock --check
+                  glob: *uv_files
+                  only: *uv_only_run
+                # [ruff-pre-commit/.pre-commit-hooks.yaml](https://github.com/astral-sh/ruff-pre-commit/blob/main/.pre-commit-hooks.yaml)
+                # [ruff/integrations/pre-commit](https://docs.astral.sh/ruff/integrations/#pre-commit)
+                - name: ruff-check
+                  run: ruff check --force-exclude '{staged_files}'
+                  glob: *ruff_files
+                  only: *ruff_only_run
+                # [pre-commit/mirrors-mypy/.pre-commit-config.yaml](https://github.com/pre-commit/mirrors-mypy/blob/main/.pre-commit-hooks.yaml)
+                - name: mypy
+                  run: mypy '{staged_files}'
+                  glob: "*.py"
+                  only:
+                    - run: python --version
+                    - run: mypy --version
+post-checkout: &out_hook
+  jobs:
+    - name: uv-sync
+      run: uv sync --locked
+      only: *uv_only_run
+      glob: *uv_files
+post-merge: *out_hook
+post-rewrite: *out_hook

@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/evilmartians/lefthook/refs/heads/master/schema.json
+post-checkout: &out_hook
+  piped: true
+  jobs:
+    - name: mise-install
+      run: mise install
+      glob: "{,.}mise{,.*,/config}.toml"
+post-merge: *out_hook
+post-rewrite: *out_hook

@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/evilmartians/lefthook/refs/heads/master/schema.json
+pre-commit:
+  jobs:
+    - name: format
+      stage_fixed: true
+      group:
+        jobs:
+          - name: shell
+            group:
+              jobs:
+                - name: shfmt
+                  # [A shell parser, formatter, and interpreter with bash support; includes shfmt](https://github.com/mvdan/sh)
+                  # 支持 editorconfig
+                  run: shfmt -l -w '{staged_files}'
+                  glob: &sh_files "*.{sh,bash}{,.*}"
+                  only:
+                    - run: shfmt --version
+    - name: check
+      group:
+        jobs:
+          - name: shell
+            group:
+              parallel: true
+              jobs:
+                - name: shellcheck
+                  # [ShellCheck, a static analysis tool for shell scripts](https://github.com/koalaman/shellcheck)
+                  run: shellcheck --external-sources '{staged_files}'
+                  glob: *sh_files
+                  only:
+                    - run: shellcheck --version
+                ## docker
+                - name: hadolint
+                  # [Dockerfile linter, validate inline bash, written in Haskell](https://github.com/hadolint/hadolint)
+                  run: hadolint '{staged_files}'
+                  glob: "{,*.}{Dockerfile,dockerfile}"
+                  only:
+                    - run: hadolint --version

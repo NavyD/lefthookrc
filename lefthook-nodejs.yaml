@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/evilmartians/lefthook/refs/heads/master/schema.json
+pre-commit:
+  jobs:
+    - name: format
+      group:
+        jobs:
+          - name: nodejs
+            stage_fixed: true
+            group:
+              piped: true
+              jobs:
+                - name: prettier
+                  # [Prettier is an opinionated code formatter.](https://github.com/prettier/prettier)
+                  run: prettier --ignore-unknown --write '{staged_files}'
+                  file_types:
+                    - text
+                  only:
+                    - run: prettier --version
+post-checkout: &out_hook
+  jobs:
+    - name: npm-install
+      run: |
+        # TODO: 使用 only.run 检查 package.json 是否存在
+        if [ ! -s package.json ]; then
+          echo "WARN: Not found package.json for npm install"
+          exit 0
+        fi
+        # 仅在 package-lock 存在时使用 ci 安装
+        if [ -n "$CI" ] && [ -s package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
+      only:
+        - run: node --version
+        - run: npm --version
+post-merge: *out_hook
+post-rewrite: *out_hook

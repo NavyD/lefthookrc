@@ -1,0 +1,107 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/evilmartians/lefthook/refs/heads/master/schema.json
+pre-commit:
+  piped: true
+  jobs:
+    - name: format
+      stage_fixed: true
+      group:
+        jobs:
+          - name: tombi
+            run: tombi format '{staged_files}'
+            glob: "*.toml"
+            only:
+              - run: tombi --version
+    - name: check
+      stage_fixed: false
+      group:
+        parallel: true
+        jobs:
+          - name: actionlint
+            # https://github.com/rhysd/actionlint/blob/main/docs/usage.md
+            run: actionlint '{staged_files}'
+            glob: .github/workflows/*.{yaml,yml}
+            only:
+              - run: actionlint --version
+          - name: gitleaks
+            # https://github.com/gitleaks/gitleaks#commands
+            run: gitleaks git --pre-commit --redact --staged --verbose --no-banner
+            file_types:
+              - text
+            only:
+              - run: gitleaks --version
+          - name: editorconfig-checker
+            # NOTE: max_line_length 规则非常容易触发限制，可以使用排除规则避免这个问题
+            # https://github.com/editorconfig-checker/editorconfig-checker#excluding
+            run: editorconfig-checker -no-color '{staged_files}'
+            file_types:
+              - text
+            only:
+              - run: editorconfig-checker --version
+          - name: yamllint
+            # https://github.com/adrienverge/yamllint/blob/master/.pre-commit-hooks.yaml
+            run: yamllint '{staged_files}'
+            glob: "*.y{,a}ml"
+            only:
+              - run: yamllint --version
+
+          # https://github.com/pre-commit/pre-commit-hooks
+          - name: check-illegal-windows-names
+            # https://github.com/pre-commit/pre-commit-hooks/blob/31903eabdb97f5a3375fb1ea419ff782de64d7e7/.pre-commit-hooks.yaml#L49
+            only:
+              - run: python --version
+            run: |
+              python - '{staged_files}' <<'EOF'
+              import os
+              import re
+              import sys
+              name_pat = re.compile(r'(?i)((^|/)(CON|PRN|AUX|NUL|COM[\d¹²³]|LPT[\d¹²³])(\.|/|$)|[<>:\"\\|?*\x00-\x1F]|/[^/]*[\.\s]/|[^/]*[\.\s]$)')
+              for arg in sys.argv[1:]:
+                  # NOTE: 移除 windows 绝对路径包含的盘符 `C:` 避免 `:` 匹配
+                  # 在非 windows 平台上不会移除盘符
+                  _drive, path = os.path.splitdrive(arg)
+                  if m := name_pat.search(path):
+                      msg = f'Found invalid chars `{m.group()}` in `{path}`'
+                      raise ValueError(msg)
+              EOF
+          - name: check-case-conflict
+            only:
+              - run: check-case-conflict -h
+            run: check-case-conflict '{staged_files}'
+          - name: check-merge-conflict
+            only:
+              - run: check-merge-conflict -h
+            run: check-merge-conflict '{staged_files}'
+            file_types:
+              - text
+          - name: check-symlinks
+            only:
+              - run: check-symlinks -h
+            run: check-symlinks '{staged_files}'
+          - name: destroyed-symlinks
+            only:
+              - run: destroyed-symlinks -h
+            run: destroyed-symlinks '{staged_files}'
+commit-msg:
+  piped: true
+  jobs:
+    - name: typos
+      run: typos --force-exclude --write-changes '{1}'
+      stage_fixed: true
+      only:
+        - run: typos --version
+    - name: autocorrect
+      run: autocorrect --fix '{1}'
+      stage_fixed: true
+      only:
+        - run: autocorrect --version
+    - name: editorconfig-checker
+      run: editorconfig-checker '{1}'
+      only:
+        - run: editorconfig-checker --version
+    - name: commitizen
+      # https://github.com/commitizen-tools/commitizen/blob/master/.pre-commit-hooks.yaml
+      run: cz check --allow-abort --commit-msg-file '{1}'
+post-checkout: &out_hook
+  files: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD
+post-merge: *out_hook
+post-rewrite: *out_hook
