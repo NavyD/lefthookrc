@@ -105,6 +105,10 @@ commit-msg:
     - name: commitizen
       # https://github.com/commitizen-tools/commitizen/blob/master/.pre-commit-hooks.yaml
       run: cz check --allow-abort --commit-msg-file '{1}'
+pre-push:
+  jobs:
+    - name: commitizen-check-branch
+      run: cz check --rev-range origin/HEAD..HEAD
 post-checkout: &out_hook
   files: git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD
 post-merge: *out_hook
