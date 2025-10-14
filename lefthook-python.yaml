@@ -4,16 +4,12 @@ pre-commit:
     - name: format
       group:
         jobs:
-          - name: python
-            stage_fixed: true
-            group:
-              jobs:
-                - name: ruff-format
-                  run: ruff format --force-exclude '{staged_files}'
-                  glob: &ruff_files "*.py{,i}"
-                  only: &ruff_only_run
-                    - run: python --version
-                    - run: ruff --version
+          - name: ruff-format
+            run: ruff format --force-exclude '{staged_files}'
+            glob: &ruff_files "*.py{,i}"
+            only: &ruff_only_run
+              - run: python --version
+              - run: ruff --version
     - name: fix
       group:
         jobs:

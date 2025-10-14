@@ -4,18 +4,13 @@ pre-commit:
     - name: format
       group:
         jobs:
-          - name: nodejs
-            stage_fixed: true
-            group:
-              piped: true
-              jobs:
-                - name: prettier
-                  # [Prettier is an opinionated code formatter.](https://github.com/prettier/prettier)
-                  run: prettier --ignore-unknown --write '{staged_files}'
-                  file_types:
-                    - text
-                  only:
-                    - run: prettier --version
+          - name: prettier
+            # [Prettier is an opinionated code formatter.](https://github.com/prettier/prettier)
+            run: prettier --ignore-unknown --write '{staged_files}'
+            file_types:
+              - text
+            only:
+              - run: prettier --version
 post-checkout: &out_hook
   jobs:
     - name: npm-install

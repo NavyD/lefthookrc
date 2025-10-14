@@ -5,16 +5,13 @@ pre-commit:
       stage_fixed: true
       group:
         jobs:
-          - name: shell
-            group:
-              jobs:
-                - name: shfmt
-                  # [A shell parser, formatter, and interpreter with bash support; includes shfmt](https://github.com/mvdan/sh)
-                  # 支持 editorconfig
-                  run: shfmt -l -w '{staged_files}'
-                  glob: &sh_files "*.{sh,bash}{,.*}"
-                  only:
-                    - run: shfmt --version
+          - name: shfmt
+            # [A shell parser, formatter, and interpreter with bash support; includes shfmt](https://github.com/mvdan/sh)
+            # 支持 editorconfig
+            run: shfmt -l -w '{staged_files}'
+            glob: &sh_files "*.{sh,bash}"
+            only:
+              - run: shfmt --version
     - name: check
       group:
         jobs:
