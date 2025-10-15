@@ -14,15 +14,18 @@ pre-commit:
                 - name: autocorrect-CJK
                   # https://github.com/huacnlee/autocorrect#use-in-cli
                   run: autocorrect --fix '{staged_files}'
+                  stage_fixed: true
                   only:
                     - run: autocorrect --version
                 - name: markdownlint
                   # https://github.com/DavidAnson/markdownlint-cli2#command-line
                   run: markdownlint-cli2 --fix '{staged_files}'
+                  stage_fixed: true
                   only:
                     - run: markdownlint-cli2 --version
                 - name: typos
                   # [Source code spell checker](https://github.com/crate-ci/typos)
                   run: typos --force-exclude --write-changes '{staged_files}'
+                  stage_fixed: true
                   only:
                     - run: typos --version

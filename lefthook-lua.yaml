@@ -9,6 +9,7 @@ pre-commit:
           - name: stylua
             # [A Lua code formatter](https://github.com/JohnnyMorganz/StyLua)
             run: stylua '{staged_files}'
+            stage_fixed: true
             glob: "*.lua{,u}"
             only:
               - run: stylua --version

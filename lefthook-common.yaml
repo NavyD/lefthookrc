@@ -3,12 +3,12 @@ pre-commit:
   piped: true
   jobs:
     - name: format
-      stage_fixed: true
       group:
         parallel: true
         jobs:
           - name: tombi-format
             run: tombi format '{staged_files}'
+            stage_fixed: true
             glob: "*.toml"
             only:
               - run: tombi --version

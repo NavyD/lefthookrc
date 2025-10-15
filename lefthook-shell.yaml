@@ -2,7 +2,6 @@
 pre-commit:
   jobs:
     - name: format
-      stage_fixed: true
       group:
         jobs:
           - name: shfmt
@@ -10,6 +9,7 @@ pre-commit:
             # 支持 editorconfig
             run: shfmt -l -w '{staged_files}'
             glob: &sh_files "*.{sh,bash}"
+            stage_fixed: true
             only:
               - run: shfmt --version
     - name: check
