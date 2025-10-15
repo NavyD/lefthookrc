@@ -14,18 +14,12 @@ pre-commit:
 post-checkout: &out_hook
   jobs:
     - name: npm-install
-      run: |
-        # TODO: 使用 only.run 检查 package.json 是否存在
-        if [ ! -s package.json ]; then
-          echo "WARN: Not found package.json for npm install"
-          exit 0
-        fi
-        # 仅在 package-lock 存在时使用 ci 安装
-        if [ -n "$CI" ] && [ -s package-lock.json ]; then
-          npm ci
-        else
-          npm install
-        fi
+      # NOTE: 使用 `"` 可能由于双 `"` 导致语法问题
+      # [lefthook] run: "C:\Program Files\Git\bin\sh.exe" -c "if [ -z "$CI" ]; then
+      # TODO: 使用 only.run 检查 package.json 是否存在
+      run: npm ci
+      glob:
+        - package.json
       only:
         - run: node --version
         - run: npm --version
