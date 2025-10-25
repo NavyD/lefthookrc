@@ -3,13 +3,13 @@ pre-commit:
   piped: true
   jobs:
     - name: format
-      stage_fixed: true
+      stage_fixed: false
       group:
         jobs:
           - name: stylua
             # [A Lua code formatter](https://github.com/JohnnyMorganz/StyLua)
             run: stylua '{staged_files}'
-            stage_fixed: true
+            stage_fixed: false
             glob: "*.lua{,u}"
             only:
               - run: stylua --version

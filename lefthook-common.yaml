@@ -1,5 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/evilmartians/lefthook/refs/heads/master/schema.json
 pre-commit:
+  fail_on_changes: ci
   piped: true
   jobs:
     - name: format
@@ -8,7 +9,7 @@ pre-commit:
         jobs:
           - name: tombi-format
             run: tombi format '{staged_files}'
-            stage_fixed: true
+            stage_fixed: false
             glob: "*.toml"
             only:
               - run: tombi --version
@@ -90,12 +91,12 @@ commit-msg:
   jobs:
     - name: typos
       run: typos --force-exclude --write-changes '{1}'
-      stage_fixed: true
+      stage_fixed: false
       only:
         - run: typos --version
     - name: autocorrect
       run: autocorrect --fix '{1}'
-      stage_fixed: true
+      stage_fixed: false
       only:
         - run: autocorrect --version
     - name: editorconfig-checker

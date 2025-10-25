@@ -7,7 +7,7 @@ pre-commit:
           - name: prettier
             # [Prettier is an opinionated code formatter.](https://github.com/prettier/prettier)
             run: prettier --ignore-unknown --write '{staged_files}'
-            stage_fixed: true
+            stage_fixed: false
             file_types:
               - text
             only:

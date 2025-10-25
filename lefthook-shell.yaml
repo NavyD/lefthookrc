@@ -9,7 +9,7 @@ pre-commit:
             # 支持 editorconfig
             run: shfmt -l -w '{staged_files}'
             glob: &sh_files "*.{sh,bash}"
-            stage_fixed: true
+            stage_fixed: false
             only:
               - run: shfmt --version
     - name: check

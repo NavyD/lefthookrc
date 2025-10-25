@@ -6,7 +6,7 @@ pre-commit:
         jobs:
           - name: ruff-format
             run: ruff format --force-exclude '{staged_files}'
-            stage_fixed: true
+            stage_fixed: false
             glob: &ruff_files "*.py{,i}"
             only: &ruff_only_run
               - run: python --version
@@ -20,7 +20,7 @@ pre-commit:
               jobs:
                 - name: uv-lock
                   run: uv lock
-                  stage_fixed: true
+                  stage_fixed: false
                   glob: &uv_files
                     - uv.lock
                     - uv.toml
@@ -30,7 +30,7 @@ pre-commit:
                     - run: uv --version
                 - name: ruff-check-fix
                   run: ruff check --force-exclude --fix '{staged_files}'
-                  stage_fixed: true
+                  stage_fixed: false
                   glob: *ruff_files
                   only: *ruff_only_run
     - name: check
