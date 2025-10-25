@@ -1,3 +1,10 @@
+## v0.4.1 (2025-10-25)
+
+### Fix
+
+- set `stage_fixed: false` to avoid unknown changes
+- stage_fixed not working on group job
+
 ## v0.4.0 (2025-10-15)
 
 ### Feat
