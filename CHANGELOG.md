@@ -1,3 +1,11 @@
+## v0.4.1 (2025-11-06)
+
+### Fix
+
+- set `fail_on_changes=always` to avoid still passing when file modifications
+- set `stage_fixed: false` to avoid unknown changes
+- stage_fixed not working on group job
+
 ## v0.4.0 (2025-10-15)
 
 ### Feat
